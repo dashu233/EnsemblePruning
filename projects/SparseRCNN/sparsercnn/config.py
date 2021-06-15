@@ -48,4 +48,4 @@ def add_sparsercnn_config(cfg):
 
     cfg.PRUNE = CN()
     cfg.PRUNE.PRUNE_STEPS = [250000 + _ * 5000 for _ in range(1,11)]
-    cfg.PRUNE.gamma = 0.8
+    cfg.PRUNE.PRUNE_GAMMA = 0.8
