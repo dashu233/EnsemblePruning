@@ -23,17 +23,33 @@ from detectron2.data import MetadataCatalog, build_detection_train_loader
 from detectron2.engine import AutogradProfiler, DefaultTrainer, default_argument_parser, default_setup, launch
 from detectron2.evaluation import COCOEvaluator, verify_results
 from detectron2.solver.build import maybe_add_gradient_clipping
+from detectron2.modeling import build_model
+import logging
 
 from detectron2.engine import hooks
 from fvcore.nn.precise_bn import get_bn_modules
 from sparsercnn import SparseRCNNDatasetMapper, add_sparsercnn_config
 from sparsercnn import UnStructureIMP
-
+import torch.nn.utils.prune as prune
+from detectron2.checkpoint import DetectionCheckpointer
 
 class Trainer(DefaultTrainer):
 #     """
 #     Extension of the Trainer class adapted to SparseRCNN.
 #     """
+
+    @classmethod
+    def build_model(cls, cfg):
+        model = build_model(cfg)
+        # create mask and weight_orig before paralleling
+        for name, module in model.backbone.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                prune.l1_unstructured(module, name='weight', amount=0)
+            elif isinstance(module, torch.nn.Linear):
+                prune.l1_unstructured(module, name='weight', amount=0)
+        logger = logging.getLogger(__name__)
+        logger.info("Model:\n{}".format(model))
+        return model
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -150,7 +166,6 @@ class Trainer(DefaultTrainer):
 
         ret.append(UnStructureIMP(cfg.PRUNE.PRUNE_STEPS,cfg.PRUNE.PRUNE_GAMMA,comm.is_main_process()))
         return ret
-
 
 
 def setup(args):

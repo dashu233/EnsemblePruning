@@ -47,5 +47,5 @@ def add_sparsercnn_config(cfg):
     cfg.SOLVER.BACKBONE_MULTIPLIER = 1.0
 
     cfg.PRUNE = CN()
-    cfg.PRUNE.PRUNE_STEPS = [250000 + _ * 5000 for _ in range(1,11)]
+    cfg.PRUNE.PRUNE_STEPS = [100 + _ * 100 for _ in range(0,11)]
     cfg.PRUNE.PRUNE_GAMMA = 0.8
